@@ -1,0 +1,310 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Subir PDF</title>
+    <style>
+        :root {
+            --primary-color: #3b82f6;
+            --primary-hover: #2563eb;
+            --text-color: #1f2937;
+            --border-color: #e5e7eb;
+            --success-color: #10b981;
+            --error-color: #ef4444;
+            --bg-light: #f9fafb;
+        }
+        
+        body {
+            font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+            color: var(--text-color);
+            background-color: #ffffff;
+            line-height: 1.5;
+            margin: 0;
+            padding: 0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+        }
+        
+        .container {
+            width: 90%;
+            max-width: 480px;
+            padding: 2rem;
+            background-color: white;
+            border-radius: 12px;
+            box-shadow: 0 4px 24px rgba(0, 0, 0, 0.05);
+        }
+        
+        h2 {
+            margin-top: 0;
+            margin-bottom: 1.5rem;
+            font-weight: 600;
+            color: var(--text-color);
+            font-size: 1.5rem;
+        }
+        
+        .upload-area {
+            border: 2px dashed var(--border-color);
+            border-radius: 8px;
+            padding: 2rem 1rem;
+            margin-bottom: 1.5rem;
+            background-color: var(--bg-light);
+            transition: all 0.2s ease;
+            cursor: pointer;
+        }
+        
+        .upload-area:hover {
+            border-color: var(--primary-color);
+        }
+        
+        .file-input-wrapper {
+            position: relative;
+            margin-bottom: 1rem;
+        }
+        
+        .file-input {
+            position: absolute;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            opacity: 0;
+            cursor: pointer;
+        }
+        
+        .file-label {
+            display: block;
+            font-size: 0.875rem;
+            color: #64748b;
+            margin-bottom: 0.5rem;
+        }
+        
+        .file-selected {
+            font-size: 0.875rem;
+            margin-top: 0.5rem;
+            color: #64748b;
+            word-break: break-all;
+        }
+        
+        .icon {
+            display: block;
+            margin: 0 auto 1rem;
+            font-size: 2rem;
+            color: #94a3b8;
+        }
+        
+        button {
+            display: block;
+            width: 100%;
+            padding: 0.75rem 1rem;
+            font-size: 1rem;
+            font-weight: 500;
+            background-color: var(--primary-color);
+            color: white;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            transition: background-color 0.2s ease;
+        }
+        
+        button:hover {
+            background-color: var(--primary-hover);
+        }
+        
+        button:disabled {
+            background-color: #cbd5e1;
+            cursor: not-allowed;
+        }
+        
+        #status {
+            margin-top: 1rem;
+            padding: 0.75rem;
+            border-radius: 6px;
+            font-size: 0.875rem;
+            display: none;
+        }
+        
+        .status-success {
+            display: block !important;
+            background-color: rgba(16, 185, 129, 0.1);
+            color: var(--success-color);
+        }
+        
+        .status-error {
+            display: block !important;
+            background-color: rgba(239, 68, 68, 0.1);
+            color: var(--error-color);
+        }
+        
+        .loader {
+            display: none;
+            width: 20px;
+            height: 20px;
+            margin: 0 auto;
+            border: 3px solid rgba(255, 255, 255, 0.3);
+            border-radius: 50%;
+            border-top-color: white;
+            animation: spin 1s ease-in-out infinite;
+        }
+        
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+        
+        .btn-content {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+        }
+        
+        .loading .btn-text {
+            display: none;
+        }
+        
+        .loading .loader {
+            display: block;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h2>Subir un archivo PDF</h2>
+        
+        <form id="uploadForm">
+            <div class="upload-area" id="dropArea">
+                <div class="icon">📄</div>
+                <p>Arrastra y suelta tu PDF aquí o</p>
+                <div class="file-input-wrapper">
+                    <input type="file" id="fileInput" class="file-input" accept="application/pdf" required>
+                    <button type="button" id="browseButton">Seleccionar archivo</button>
+                </div>
+                <p class="file-selected" id="fileName">Ningún archivo seleccionado</p>
+            </div>
+            
+            <button type="submit" id="submitButton" disabled>
+                <div class="btn-content">
+                    <span class="btn-text">Subir PDF</span>
+                    <div class="loader"></div>
+                </div>
+            </button>
+        </form>
+        
+        <p id="status"></p>
+    </div>
+
+    <script>
+        const fileInput = document.getElementById("fileInput");
+        const fileName = document.getElementById("fileName");
+        const submitButton = document.getElementById("submitButton");
+        const status = document.getElementById("status");
+        const browseButton = document.getElementById("browseButton");
+        const dropArea = document.getElementById("dropArea");
+        const uploadForm = document.getElementById("uploadForm");
+        
+        // Click en el botón de explorar
+        browseButton.addEventListener("click", () => {
+            fileInput.click();
+        });
+        
+        // Mostrar nombre del archivo seleccionado
+        fileInput.addEventListener("change", () => {
+            if (fileInput.files.length) {
+                fileName.textContent = fileInput.files[0].name;
+                submitButton.disabled = false;
+            } else {
+                fileName.textContent = "Ningún archivo seleccionado";
+                submitButton.disabled = true;
+            }
+        });
+        
+        // Funcionalidad drag and drop
+        ['dragenter', 'dragover', 'dragleave', 'drop'].forEach(eventName => {
+            dropArea.addEventListener(eventName, preventDefaults, false);
+        });
+        
+        function preventDefaults(e) {
+            e.preventDefault();
+            e.stopPropagation();
+        }
+        
+        ['dragenter', 'dragover'].forEach(eventName => {
+            dropArea.addEventListener(eventName, highlight, false);
+        });
+        
+        ['dragleave', 'drop'].forEach(eventName => {
+            dropArea.addEventListener(eventName, unhighlight, false);
+        });
+        
+        function highlight() {
+            dropArea.style.borderColor = var(--primary-color);
+            dropArea.style.backgroundColor = "#eff6ff";
+        }
+        
+        function unhighlight() {
+            dropArea.style.borderColor = "";
+            dropArea.style.backgroundColor = "";
+        }
+        
+        dropArea.addEventListener('drop', handleDrop, false);
+        
+        function handleDrop(e) {
+            const dt = e.dataTransfer;
+            const files = dt.files;
+            
+            if (files.length) {
+                fileInput.files = files;
+                fileName.textContent = files[0].name;
+                submitButton.disabled = false;
+            }
+        }
+        
+        // Enviar formulario
+        uploadForm.addEventListener("submit", async function(event) {
+            event.preventDefault();
+            
+            if (!fileInput.files.length) {
+                status.textContent = "Por favor selecciona un archivo PDF.";
+                status.className = "status-error";
+                return;
+            }
+            
+            submitButton.disabled = true;
+            submitButton.classList.add("loading");
+            status.className = "";
+            status.textContent = "";
+            status.style.display = "none";
+            
+            try {
+                let formData = new FormData();
+                formData.append("file", fileInput.files[0]);
+                
+                let response = await fetch("https://dys-qu4y.shuttle.app/upload", {
+                    method: "POST",
+                    body: formData
+                });
+                
+                let result = await response.text();
+                
+                status.textContent = result;
+                if (response.ok) {
+                    status.className = "status-success";
+                    fileName.textContent = "Ningún archivo seleccionado";
+                    fileInput.value = "";
+                } else {
+                    status.className = "status-error";
+                }
+            } catch (error) {
+                status.textContent = "Error de conexión. Por favor intenta nuevamente.";
+                status.className = "status-error";
+            } finally {
+                submitButton.disabled = false;
+                submitButton.classList.remove("loading");
+                status.style.display = "block";
+            }
+        });
+    </script>
+</body>
+</html>

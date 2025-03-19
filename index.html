@@ -6,7 +6,6 @@
     <title>Subir PDF</title>
     <link rel="dns-prefetch" href="https://dys-qu4y.shuttle.app">
     <link rel="preconnect" href="https://dys-qu4y.shuttle.app" crossorigin>
-    <link rel="preload" href="https://dys-qu4y.shuttle.app/upload" as="fetch" crossorigin>
     <style>
         :root {
             --primary-color: #3b82f6;
@@ -209,10 +208,10 @@ document.addEventListener('DOMContentLoaded', function() {
 function preloadConnection(url) {
     // Crear una solicitud fetch con método HEAD (más ligero que GET)
     fetch(url, {
-        method: 'HEAD',
+        method: 'OPTIONS',
         cache: 'no-store',
         mode: 'cors',
-        credentials: 'omit'
+        credentials: 'same-origin' 
     }).catch(error => {
         // Silenciar errores - no necesitamos hacer nada si falla
         console.log('Precarga realizada');

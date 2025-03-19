@@ -4,6 +4,9 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Subir PDF</title>
+    <link rel="dns-prefetch" href="https://dys-qu4y.shuttle.app">
+    <link rel="preconnect" href="https://dys-qu4y.shuttle.app" crossorigin>
+    <link rel="preload" href="https://dys-qu4y.shuttle.app/upload" as="fetch" crossorigin>
     <style>
         :root {
             --primary-color: #3b82f6;
@@ -196,115 +199,136 @@
     </div>
 
     <script>
-        const fileInput = document.getElementById("fileInput");
-        const fileName = document.getElementById("fileName");
-        const submitButton = document.getElementById("submitButton");
-        const status = document.getElementById("status");
-        const browseButton = document.getElementById("browseButton");
-        const dropArea = document.getElementById("dropArea");
-        const uploadForm = document.getElementById("uploadForm");
+        // Agregar precarga de conexión al inicio
+document.addEventListener('DOMContentLoaded', function() {
+    // Precargar la conexión a la URL de destino silenciosamente
+    preloadConnection('https://dys-qu4y.shuttle.app/upload');
+});
+
+// Función para precargar la conexión
+function preloadConnection(url) {
+    // Crear una solicitud fetch con método HEAD (más ligero que GET)
+    fetch(url, {
+        method: 'HEAD',
+        cache: 'no-store',
+        mode: 'cors',
+        credentials: 'omit'
+    }).catch(error => {
+        // Silenciar errores - no necesitamos hacer nada si falla
+        console.log('Precarga realizada');
+    });
+}
+
+// Tu código original sin modificar
+const fileInput = document.getElementById("fileInput");
+const fileName = document.getElementById("fileName");
+const submitButton = document.getElementById("submitButton");
+const status = document.getElementById("status");
+const browseButton = document.getElementById("browseButton");
+const dropArea = document.getElementById("dropArea");
+const uploadForm = document.getElementById("uploadForm");
+
+// Click en el botón de explorar
+browseButton.addEventListener("click", () => {
+    fileInput.click();
+});
+
+// Mostrar nombre del archivo seleccionado
+fileInput.addEventListener("change", () => {
+    if (fileInput.files.length) {
+        fileName.textContent = fileInput.files[0].name;
+        submitButton.disabled = false;
+    } else {
+        fileName.textContent = "Ningún archivo seleccionado";
+        submitButton.disabled = true;
+    }
+});
+
+// Funcionalidad drag and drop
+['dragenter', 'dragover', 'dragleave', 'drop'].forEach(eventName => {
+    dropArea.addEventListener(eventName, preventDefaults, false);
+});
+
+function preventDefaults(e) {
+    e.preventDefault();
+    e.stopPropagation();
+}
+
+['dragenter', 'dragover'].forEach(eventName => {
+    dropArea.addEventListener(eventName, highlight, false);
+});
+
+['dragleave', 'drop'].forEach(eventName => {
+    dropArea.addEventListener(eventName, unhighlight, false);
+});
+
+function highlight() {
+    dropArea.style.borderColor = 'var(--primary-color)';
+    dropArea.style.backgroundColor = "#eff6ff";
+}
+
+function unhighlight() {
+    dropArea.style.borderColor = "";
+    dropArea.style.backgroundColor = "";
+}
+
+dropArea.addEventListener('drop', handleDrop, false);
+
+function handleDrop(e) {
+    const dt = e.dataTransfer;
+    const files = dt.files;
+    
+    if (files.length) {
+        fileInput.files = files;
+        fileName.textContent = files[0].name;
+        submitButton.disabled = false;
+    }
+}
+
+// Enviar formulario
+uploadForm.addEventListener("submit", async function(event) {
+    event.preventDefault();
+    
+    if (!fileInput.files.length) {
+        status.textContent = "Por favor selecciona un archivo PDF.";
+        status.className = "status-error";
+        return;
+    }
+    
+    submitButton.disabled = true;
+    submitButton.classList.add("loading");
+    status.className = "";
+    status.textContent = "";
+    status.style.display = "none";
+    
+    try {
+        let formData = new FormData();
+        formData.append("file", fileInput.files[0]);
         
-        // Click en el botón de explorar
-        browseButton.addEventListener("click", () => {
-            fileInput.click();
+        let response = await fetch("https://dys-qu4y.shuttle.app/upload", {
+            method: "POST",
+            body: formData
         });
         
-        // Mostrar nombre del archivo seleccionado
-        fileInput.addEventListener("change", () => {
-            if (fileInput.files.length) {
-                fileName.textContent = fileInput.files[0].name;
-                submitButton.disabled = false;
-            } else {
-                fileName.textContent = "Ningún archivo seleccionado";
-                submitButton.disabled = true;
-            }
-        });
+        let result = await response.text();
         
-        // Funcionalidad drag and drop
-        ['dragenter', 'dragover', 'dragleave', 'drop'].forEach(eventName => {
-            dropArea.addEventListener(eventName, preventDefaults, false);
-        });
-        
-        function preventDefaults(e) {
-            e.preventDefault();
-            e.stopPropagation();
+        status.textContent = result;
+        if (response.ok) {
+            status.className = "status-success";
+            fileName.textContent = "Ningún archivo seleccionado";
+            fileInput.value = "";
+        } else {
+            status.className = "status-error";
         }
-        
-        ['dragenter', 'dragover'].forEach(eventName => {
-            dropArea.addEventListener(eventName, highlight, false);
-        });
-        
-        ['dragleave', 'drop'].forEach(eventName => {
-            dropArea.addEventListener(eventName, unhighlight, false);
-        });
-        
-        function highlight() {
-            dropArea.style.borderColor = 'var(--primary-color)';
-            dropArea.style.backgroundColor = "#eff6ff";
-        }
-        
-        function unhighlight() {
-            dropArea.style.borderColor = "";
-            dropArea.style.backgroundColor = "";
-        }
-        
-        dropArea.addEventListener('drop', handleDrop, false);
-        
-        function handleDrop(e) {
-            const dt = e.dataTransfer;
-            const files = dt.files;
-            
-            if (files.length) {
-                fileInput.files = files;
-                fileName.textContent = files[0].name;
-                submitButton.disabled = false;
-            }
-        }
-        
-        // Enviar formulario
-        uploadForm.addEventListener("submit", async function(event) {
-            event.preventDefault();
-            
-            if (!fileInput.files.length) {
-                status.textContent = "Por favor selecciona un archivo PDF.";
-                status.className = "status-error";
-                return;
-            }
-            
-            submitButton.disabled = true;
-            submitButton.classList.add("loading");
-            status.className = "";
-            status.textContent = "";
-            status.style.display = "none";
-            
-            try {
-                let formData = new FormData();
-                formData.append("file", fileInput.files[0]);
-                
-                let response = await fetch("https://dys-qu4y.shuttle.app/upload", {
-                    method: "POST",
-                    body: formData
-                });
-                
-                let result = await response.text();
-                
-                status.textContent = result;
-                if (response.ok) {
-                    status.className = "status-success";
-                    fileName.textContent = "Ningún archivo seleccionado";
-                    fileInput.value = "";
-                } else {
-                    status.className = "status-error";
-                }
-            } catch (error) {
-                status.textContent = "Error de conexión. Por favor intenta nuevamente.";
-                status.className = "status-error";
-            } finally {
-                submitButton.disabled = false;
-                submitButton.classList.remove("loading");
-                status.style.display = "block";
-            }
-        });
+    } catch (error) {
+        status.textContent = "Error de conexión. Por favor intenta nuevamente.";
+        status.className = "status-error";
+    } finally {
+        submitButton.disabled = false;
+        submitButton.classList.remove("loading");
+        status.style.display = "block";
+    }
+});
     </script>
 </body>
 </html>

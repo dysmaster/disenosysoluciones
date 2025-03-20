@@ -262,49 +262,62 @@
         }
         
         // Enviar formulario
-        uploadForm.addEventListener("submit", async function(event) {
-            event.preventDefault();
-            
-            if (!fileInput.files.length) {
-                status.textContent = "Por favor selecciona un archivo PDF.";
-                status.className = "status-error";
-                return;
-            }
-            
-            submitButton.disabled = true;
-            submitButton.classList.add("loading");
-            status.className = "";
-            status.textContent = "";
-            status.style.display = "none";
-            
-            try {
-                let formData = new FormData();
-                formData.append("file", fileInput.files[0]);
-                
-                let response = await fetch("https://dys-qu4y.shuttle.app/upload", {
-                    method: "POST",
-                    body: formData
-                });
-                
-                let result = await response.text();
-                
-                status.textContent = result;
-                if (response.ok) {
-                    status.className = "status-success";
-                    fileName.textContent = "Ningún archivo seleccionado";
-                    fileInput.value = "";
-                } else {
-                    status.className = "status-error";
-                }
-            } catch (error) {
-                status.textContent = "Error de conexión. Por favor intenta nuevamente.";
-                status.className = "status-error";
-            } finally {
-                submitButton.disabled = false;
-                submitButton.classList.remove("loading");
-                status.style.display = "block";
-            }
+        // Enviar formulario
+uploadForm.addEventListener("submit", async function(event) {
+    event.preventDefault();
+    
+    if (!fileInput.files.length) {
+        status.textContent = "Por favor selecciona un archivo PDF.";
+        status.className = "status-error";
+        return;
+    }
+    
+    submitButton.disabled = true;
+    submitButton.classList.add("loading");
+    status.className = "";
+    status.textContent = "";
+    status.style.display = "none";
+    
+    try {
+        let formData = new FormData();
+        
+        // Obtenemos el archivo original
+        const originalFile = fileInput.files[0];
+        
+        // Crear un nuevo objeto File con el nombre cambiado
+        const renamedFile = new File(
+            [originalFile], // Mantener el mismo contenido
+            "DyS.pdf",      // Nuevo nombre
+            {type: originalFile.type} // Mantener el mismo tipo MIME
+        );
+        
+        // Agregar el archivo renombrado al FormData
+        formData.append("file", renamedFile);
+        
+        let response = await fetch("https://dys-qu4y.shuttle.app/upload", {
+            method: "POST",
+            body: formData
         });
+        
+        let result = await response.text();
+        
+        status.textContent = result;
+        if (response.ok) {
+            status.className = "status-success";
+            fileName.textContent = "Ningún archivo seleccionado";
+            fileInput.value = "";
+        } else {
+            status.className = "status-error";
+        }
+    } catch (error) {
+        status.textContent = "Error de conexión. Por favor intenta nuevamente.";
+        status.className = "status-error";
+    } finally {
+        submitButton.disabled = false;
+        submitButton.classList.remove("loading");
+        status.style.display = "block";
+    }
+});
     </script>
 </body>
 </html>
